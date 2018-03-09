@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include <fstream>
 
 #include <algorithm>
 
@@ -14,16 +15,25 @@ class Permutation;
 
 template <class Elem>
 class Group {
-  // TODO: need checks to see if it is in fac a group
+  // TODO: need checks to see if it is in fact a group
   // TODO: compute closures?
 public:
   set<Elem> m_set;
 
-  //Group() : m_set(0)
-  //{/*  */}
-
   void add(Elem e) {
     m_set.insert(e);
+  }
+
+  void extend(Elem e) {
+    // NOTE: this creates the closure of the group immediately
+    Elem id = e * -e;
+
+    // TODO: umjesto pretvorbe, jednostavno sve raditi prek iteratora
+    vector<Elem> generators(m_set.begin(), m_set.end());
+    generators.push_back(e);
+    m_set.clear();
+
+    *this = Group<Elem>::simple_gen(id, generators);
   }
 
   static Group<Elem> simple_gen(Elem id, vector<Elem> generators) {
@@ -92,9 +102,13 @@ public:
 
   friend ostream& operator<<(ostream& os, const Group<Elem> g) {
     typename set<Elem>::iterator it = g.m_set.begin();
+    int i = 0;
     while(it != g.m_set.end()) {
-      os << (*it) << endl;
+      Elem inv = *it;
+      inv = -inv;
+      os << i << ". " << (*it) << " -- " << inv << endl;
       it++;
+      i++;
     }
     return os;
   }
@@ -105,11 +119,52 @@ public:
   vector<int> m_perm;
 
 public:
-  bool next() {
+  bool test_next() {
     return next_permutation(m_perm.begin(), m_perm.end());
   }
 
-  void ciclify() {
+  bool next() {
+    // trebam izgenerirati sljedecu permutaciju iz postojece
+    // 1) nadjem prvi zdesna koji ne postuje poredak
+    int i;
+    int idx1 = -1;
+    int idx2 = -1;
+    for (i = size() - 2; i >= 0; --i ) {
+      if (m_perm[i+1] > m_perm[i]) {
+        // daljnji mora biti veci, ako nije nasli smo
+        idx1 = i;
+        break;
+      }
+    }
+
+    // ako smo sve prosli i nismo jos nasli indeks, onda smo na zadnjoj permutaciji, nema sljedece
+    // eventualno, mogu ici u krug ali trenutno tu hocu stati
+    if (idx1 == -1)
+      return false;
+
+    // sad nadjemo zadnji element veci od perm[i] (tj. prvi zdesna)
+    for (i = size() - 1; i >= 0; --i ) {
+      if (m_perm[i] > m_perm[idx1]) {
+        idx2 = i;
+        break;
+      }
+    }
+
+    // ovaj uvijek mora postojati al svejedno checkiram
+    if (idx2 == -1) {
+      cerr << "Ovo se ne smije dogoditi, " << __PRETTY_FUNCTION__ << endl;
+      exit(1);
+    }
+
+    // sad zamijenimo ta dva indeksa
+    std::swap(m_perm[idx1], m_perm[idx2]);
+    // i okrenemo listu
+    std::reverse(m_perm.begin()+idx1+1, m_perm.end());
+
+    return true;
+  }
+
+  void simple_ciclify() {
     for(size_t i = 0; i < size(); ++i) {
       m_perm[i] = (i+1)%size();
     }
@@ -271,12 +326,38 @@ public:
 };
 
 int main(void) {
-  Group<Permutation> h;
+  Group<Permutation> g;
+  Permutation a(8);
+  Permutation b(a.size());
 
-  Permutation a(5);
-  Permutation b(5);
-  a[0] = 4; a[1] = 2; a[2] = 3; a[3] = 1; a[4] = 0; 
-  //b = -a;
+  a[0] = 1; a[1] = 3; a[2] = 5; a[3] = 7;
+  a[4] = 0; a[5] = 2; a[6] = 4; a[7] = 6;
+
+  b[0] = 1; b[1] = 3; b[2] = 0; b[3] = 2;
+  b[4] = 5; b[5] = 7; b[6] = 4; b[7] = 6;
+  
+  //b.simple_ciclify(); 
+  g.extend(a);
+  g.extend(b);
+
+  //ofstream ff("automorfizmi");
+  cout << g << endl;
+
+  //Group<Permutation> h;
+  //h.generate_full_group(Permutation(a.size()));
+  //cout << h << endl;
+  /*
+  while (1) {
+    a.my_next();
+    b.next();
+    cout << a << endl;
+    cout << b << endl;
+    string in;
+    cin >> in;
+    if (in == "q")
+      break;
+      }*/
+
 
   //cout << a << endl;
   //cout << b << endl;
@@ -286,14 +367,14 @@ int main(void) {
   //h.add(a*b);
 
   //Permutation c(5);
-  vector<Permutation> generators;
-  generators.push_back(a);
+  //vector<Permutation> generators;
+  //generators.push_back(a);
 
-  Group<Permutation> g;
-  g = Group<Permutation>::simple_gen(Permutation(5), generators);
+  //Group<Permutation> g;
+  //g = Group<Permutation>::simple_gen(Permutation(5), generators);
   //g.generate_full_group(c);
   //cout << h << endl;
-  cout << g << endl;
+  //cout << g << endl;
 
   //c.next();
   //c.ciclify();
