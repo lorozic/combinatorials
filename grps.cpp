@@ -15,8 +15,8 @@ class Permutation;
 
 template <class Elem>
 class Group {
-  // TODO: need checks to see if it is in fact a group
-  // TODO: compute closures?
+  // TODO: need checks to see if it is in fact a group?
+  // TODO: compute closures? -- done with simple, not SS
 public:
   set<Elem> m_set;
 
@@ -94,9 +94,11 @@ public:
       it++;
     }
     return g;
-  };
+
+  }
 
   vector<Group<Elem>> disjunctUnion() {
+    // TODO: napisati particiju pomocu cosetova
   };
   //Elem operator+(Elem a, Elem b) = 0;
 
@@ -112,8 +114,14 @@ public:
     }
     return os;
   }
-};
 
+}; /////////////////////////////////////// END Group
+
+////////////////////////////////////////////////////////////////////////////////
+// CLASS: Permutation
+// Reprezentira genericku permutaciju (permutaciju skupa 1 .. n)
+// Definira osnovne operacije: TODO
+////////////////////////////////////////////////////////////////////////////////
 class Permutation {
 public:
   vector<int> m_perm;
@@ -325,12 +333,225 @@ public:
   }
 };
 
-int main(void) {
-  Group<Permutation> g;
-  Permutation a(8);
-  Permutation b(a.size());
 
-  a[0] = 1; a[1] = 3; a[2] = 5; a[3] = 7;
+// NOTE: fja testiranja pripadnosti grupi
+// TODO: ovo organizirati na nacin da
+// se moze pozvati samo za grupe nad permutacijama, nema smisla raditi
+// genericki
+int test(Permutation &g, vector<vector<Permutation>> SchreierVector) {
+  int i;
+  // TODO: provjera dal su vektori odgovarajucih velicina!
+  Permutation f(g.size());
+
+  for (i = 0; i < g.size(); ++i) {
+    int x = g(i);
+
+    // sad trazim h iz Ui, t.d. h(i) = x
+    // gledam i-ti schreier vector i trazim h unutra
+    int jidx;
+    for (jidx = 0; jidx < SchreierVector[i].size(); ++jidx) {
+      const Permutation &h = SchreierVector[i][jidx];
+      ////cout << "H: ";
+      ////cout << h << endl;
+      if (h(i) == x)
+        break;
+    }
+
+    // NOTE: kad izadjemo, ili je j == SchreierVector[i].size(), ili imam j
+    // koji trebam
+    if (jidx == SchreierVector[i].size()) {
+      // nismo pronasli takav h
+      return i;
+    }
+
+    // tu imamo takav h pa gledam njegov inverz
+    Permutation hinv = -SchreierVector[i][jidx];
+
+    cout << "$$$$$ Step: i=" << i << " jidx=" << jidx << endl;
+    cout << "$$$$$ H: ";
+    cout << -hinv << endl;
+
+    // sad mnozimo g slijeva 
+    f = f * (-hinv);
+    g = hinv * g;
+    cout << "$$$$$ New g: ";
+    cout << g << endl;
+
+    cout << "$$$$$ New f: ";
+    cout << f << endl;
+  }
+
+  return g.size();
+}
+
+// TODO: procedura za ekstenzije Schreiera
+// NOTE: prosljedjujem referencu da bi se uredno mijenjala po potrebi
+void enter(Permutation &g, vector<vector<Permutation>> &SV) {
+  int i = test(g, SV);
+  cout << "#### enter begins #### " << endl;
+  cout << "TESTING: " << g << endl;
+  cout << "i = " << i << endl;
+  int n = g.size();
+
+  // TODO: ovaj n bi trebal biti dio grupe permutacija, makar ne znam kolko je
+  // to izvedivo
+
+  // ako je vec unutra, onda ne trebamo prosiriti
+  if (i == n) {
+    cout << "exiting ..." << endl;
+    return;
+  }
+
+  // inace, prosirujemo i-ti
+  cout << "pushing back " << g << endl;
+  SV[i].push_back(g);
+  cout << "#######################################################"<< endl;
+  for(int i = 0; i < SV.size(); ++i) {
+    cout << "################" << endl;
+    cout << "U" << i << endl;
+    for(int j = 0; j < SV[i].size(); ++j) {
+      cout << SV[i][j] << endl;
+    }
+  }
+  cout << "#######################################################"<< endl;
+
+
+  // sad kad je u Ui, trebamo napraviti zatvorenje
+  // to radimo tak da za svaki daljnji Uj izmnozimo s g zdesna?
+  for (int j = i; j < SV.size(); ++j) {
+    cout << "gledam U" << j << endl;
+    for (int hidx = 0; hidx < SV[j].size(); ++hidx) {
+      Permutation f = SV[j][hidx] * g;
+      cout << "Uzimam h=" << SV[j][hidx] << endl;
+      cout << "hidx=" << hidx << endl;
+      cout << "Izracunah f, f = " << f << endl;
+      enter(f, SV);
+    }
+  }
+}
+
+int main(void) {
+  //Group<Permutation> g;
+  //Permutation a(8);
+  //Permutation b(a.size());
+  // definiram SS reprezentaciju, hocu vrtiti SS algoritam po njoj
+  // TODO: na zalost ovo treba hardkodirati dok ne napisem sve ostalo
+  vector<Permutation> u0, u1, u2, u3, u4, u5, u6, u7;
+  Permutation I(8);
+  Permutation t(8);
+
+  u0.push_back(I);
+  t[0] = 1; t[1] = 3; t[3] = 7; t[7] = 6; t[6] = 4; t[4] = 0;
+  t[2] = 5; t[5] = 2;
+  u0.push_back(t);
+  t[0] = 2; t[2] = 6; t[6] = 4; t[4] = 0;
+  t[1] = 3; t[3] = 7; t[7] = 5; t[5] = 1;
+  u0.push_back(t);
+  t[0] = 3; t[3] = 6; t[6] = 0;
+  t[1] = 7; t[7] = 4; t[4] = 1;
+  t[2] = 2;
+  t[5] = 5;
+  u0.push_back(t);
+  t[0] = 4; t[4] = 6; t[6] = 7; t[7] = 3; t[3] = 1; t[1] = 0;
+  t[2] = 5; t[5] = 2;
+  u0.push_back(t);
+  t[0] = 5; t[5] = 3; t[3] = 6; t[6] = 0;
+  t[1] = 7; t[7] = 2; t[2] = 4; t[4] = 1;
+  u0.push_back(t);
+  t[0] = 6; t[6] = 3; t[3] = 0;
+  t[1] = 4; t[4] = 7; t[7] = 1;
+  t[2] = 2;
+  t[5] = 5;
+  u0.push_back(t);
+  t[0] = 7; t[7] = 0;
+  t[1] = 6; t[6] = 1;
+  t[2] = 5; t[5] = 2;
+  t[3] = 4; t[4] = 3;
+  u0.push_back(t);
+
+  u1.push_back(I);
+  t[0] = 0;
+  t[1] = 2; t[2] = 1;
+  t[3] = 3;
+  t[4] = 4;
+  t[5] = 6; t[6] = 5;
+  t[7] = 7;
+  u1.push_back(t);
+  t[0] = 0;
+  t[1] = 4; t[4] = 2; t[2] = 1;
+  t[3] = 5; t[5] = 6; t[6] = 3;
+  t[7] = 7;
+  u1.push_back(t);
+
+  u2.push_back(I);
+  u3.push_back(I);
+  u4.push_back(I);
+  u5.push_back(I);
+  u6.push_back(I);
+  u7.push_back(I);
+  vector<vector<Permutation>> SSvec;
+  SSvec.push_back(u0);
+  SSvec.push_back(u1);
+  SSvec.push_back(u2);
+  SSvec.push_back(u3);
+  SSvec.push_back(u4);
+  SSvec.push_back(u5);
+  SSvec.push_back(u6);
+  SSvec.push_back(u7);
+
+  // po svoj logici sad valjda imam ss reprezentaciju
+  // sad trebam testirati dal je g unutra
+  Permutation g1(8);
+  g1[0] = 6; g1[6] = 0;
+  g1[1] = 7; g1[7] = 1;
+  g1[2] = 4; g1[4] = 2;
+  g1[3] = 5; g1[5] = 3;
+
+  Permutation g2(8);
+  g2[0] = 1; g2[1] = 2; g2[2] = 3; g2[3] = 4; g2[4] = 0;
+  g2[5] = 6; g2[6] = 7; g2[7] = 5;
+
+
+  cout << "Test result: " << test(g1, SSvec) << endl;
+  cout << "Test result: " << test(g2, SSvec) << endl;
+
+  Permutation alpha(8), beta(8);
+  alpha[0] = 1; alpha[1] = 3; alpha[3] = 7;
+  alpha[7] = 6; alpha[6] = 4; alpha[4] = 0;
+  alpha[2] = 5; alpha[5] = 2;
+
+  beta[0] = 1; beta[1] = 3; beta[3] = 2; beta[2] = 0;
+  beta[4] = 5; beta[5] = 7; beta[7] = 6; beta[6] = 4;
+
+  // imam alfa i beta (generatore), generiram SS
+  vector<vector<Permutation>> SS;
+  vector<Permutation> idgrp;
+
+  // inicijaliziram SS vektor
+  idgrp.push_back(Permutation(8));
+  SS.push_back(idgrp);
+  SS.push_back(idgrp);
+  SS.push_back(idgrp);
+  SS.push_back(idgrp);
+  SS.push_back(idgrp);
+  SS.push_back(idgrp);
+  SS.push_back(idgrp);
+  SS.push_back(idgrp);
+
+  enter(alpha, SS);
+  cout << "1234 gotov prvi" << endl;
+  enter(beta, SS);
+
+  for(int i = 0; i < SS.size(); ++i) {
+    cout << "################" << endl;
+    cout << "U" << i << endl;
+    for(int j = 0; j < SS[i].size(); ++j) {
+      cout << SS[i][j] << endl;
+    }
+  }
+
+  // neki primjeri iz knjige
+  /*a[0] = 1; a[1] = 3; a[2] = 5; a[3] = 7;
   a[4] = 0; a[5] = 2; a[6] = 4; a[7] = 6;
 
   b[0] = 1; b[1] = 3; b[2] = 0; b[3] = 2;
@@ -342,6 +563,7 @@ int main(void) {
 
   //ofstream ff("automorfizmi");
   cout << g << endl;
+  */
 
   //Group<Permutation> h;
   //h.generate_full_group(Permutation(a.size()));
