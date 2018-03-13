@@ -235,10 +235,10 @@ public:
     // TODO ovo hocu lepse
     while(1) {
 
-      // nadjemo neiskoristeni 
+      // nadjemo neiskoristeni
       if (fst == -1) {
         for (size_t j = 0; j < p.size(); ++j) {
-          if (mask[j] == false) { 
+          if (mask[j] == false) {
             of << "(";
             fst = j;
             i = fst;
@@ -248,7 +248,7 @@ public:
           }
         }
       }
-       
+
       // ako su svi iskoristeni izadjemo
       if (fst == -1)
         break;
@@ -339,6 +339,7 @@ public:
 // se moze pozvati samo za grupe nad permutacijama, nema smisla raditi
 // genericki
 int test(Permutation &g, vector<vector<Permutation>> SchreierVector) {
+  cout << "$$$$ TEST BEGINS $$$$" << endl;
   int i;
   // TODO: provjera dal su vektori odgovarajucih velicina!
   Permutation f(g.size());
@@ -361,6 +362,7 @@ int test(Permutation &g, vector<vector<Permutation>> SchreierVector) {
     // koji trebam
     if (jidx == SchreierVector[i].size()) {
       // nismo pronasli takav h
+      cout << "$$$$ TEST FAILS $$$$" << endl;
       return i;
     }
 
@@ -378,19 +380,22 @@ int test(Permutation &g, vector<vector<Permutation>> SchreierVector) {
     cout << g << endl;
 
     cout << "$$$$$ New f: ";
-    cout << f << endl;
+    cout << f << endl; // f je na kraju inverz svega s cim smo pomnozili g
   }
 
+  cout << "$$$$ TEST ENDS $$$$" << endl;
   return g.size();
 }
 
 // TODO: procedura za ekstenzije Schreiera
 // NOTE: prosljedjujem referencu da bi se uredno mijenjala po potrebi
 void enter(Permutation &g, vector<vector<Permutation>> &SV) {
+  cout << "######### enter begins ############## " << endl;
   int i = test(g, SV);
-  cout << "#### enter begins #### " << endl;
   cout << "TESTING: " << g << endl;
   cout << "i = " << i << endl;
+  cout << "g is now: " << g << endl;
+
   int n = g.size();
 
   // TODO: ovaj n bi trebal biti dio grupe permutacija, makar ne znam kolko je
@@ -418,10 +423,10 @@ void enter(Permutation &g, vector<vector<Permutation>> &SV) {
 
   // sad kad je u Ui, trebamo napraviti zatvorenje
   // to radimo tak da za svaki daljnji Uj izmnozimo s g zdesna?
-  for (int j = i; j < SV.size(); ++j) {
+  for (int j = 0; j <= i; ++j) {
     cout << "gledam U" << j << endl;
     for (int hidx = 0; hidx < SV[j].size(); ++hidx) {
-      Permutation f = SV[j][hidx] * g;
+      Permutation f = g * SV[j][hidx];
       cout << "Uzimam h=" << SV[j][hidx] << endl;
       cout << "hidx=" << hidx << endl;
       cout << "Izracunah f, f = " << f << endl;
@@ -436,7 +441,7 @@ int main(void) {
   //Permutation b(a.size());
   // definiram SS reprezentaciju, hocu vrtiti SS algoritam po njoj
   // TODO: na zalost ovo treba hardkodirati dok ne napisem sve ostalo
-  vector<Permutation> u0, u1, u2, u3, u4, u5, u6, u7;
+  /*vector<Permutation> u0, u1, u2, u3, u4, u5, u6, u7;
   Permutation I(8);
   Permutation t(8);
 
@@ -515,6 +520,7 @@ int main(void) {
   cout << "Test result: " << test(g1, SSvec) << endl;
   cout << "Test result: " << test(g2, SSvec) << endl;
 
+  */
   Permutation alpha(8), beta(8);
   alpha[0] = 1; alpha[1] = 3; alpha[3] = 7;
   alpha[7] = 6; alpha[6] = 4; alpha[4] = 0;
